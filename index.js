@@ -158,7 +158,6 @@ async function run() {
 
         // ---------------- FACILITIES API ----------------
 
-        // Create Facility (Private)
         app.post('/facilities', verifyToken, async (req, res) => {
             try {
                 const { name, facility_type, location, price_per_hour, capacity, available_slots, description, owner_email } = req.body;
@@ -188,13 +187,11 @@ async function run() {
             }
         });
 
-        // Get All Facilities (Public with Search and Filter)
         app.get('/facilities', async (req, res) => {
             try {
                 const { search, type } = req.query;
                 const query = {};
 
-                // Search by name (case-insensitive regex)
                 if (search) {
                     query.name = { $regex: search, $options: 'i' };
                 }
