@@ -149,7 +149,6 @@ app.post('/auth/google', async (req, res) => {
             return res.status(400).send({ message: "Google access token is required" });
         }
 
-        // Fetch user info from Google's UserInfo API using the access token
         const googleResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
             headers: {
                 Authorization: `Bearer ${access_token}`
@@ -167,11 +166,9 @@ app.post('/auth/google', async (req, res) => {
             return res.status(400).send({ message: "Google account does not have an email address" });
         }
 
-        // Check if user exists in database
         let user = await usersCollection.findOne({ email });
 
         if (!user) {
-            // Register user if they do not exist
             const salt = await bcrypt.genSalt(10);
             const randomPassword = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
             const hashedPassword = await bcrypt.hash(randomPassword, salt);
@@ -192,7 +189,6 @@ app.post('/auth/google', async (req, res) => {
             };
         }
 
-        // Sign JWT local token
         const token = jwt.sign(
             { id: user._id, email: user.email, name: user.name, photoUrl: user.photoUrl },
             process.env.JWT_SECRET,
