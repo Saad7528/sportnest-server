@@ -53,7 +53,16 @@ async function ensureDBConnection(req, res, next) {
 app.use(ensureDBConnection);
 
 const verifyToken = (req, res, next) => {
-    const token = req.cookies.token;
+    let token = req.cookies.token;
+
+    // Check Authorization header as a fallback
+    if (!token && req.headers.authorization) {
+        const authHeader = req.headers.authorization;
+        if (authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1];
+        }
+    }
+
     if (!token) {
         return res.status(401).send({ message: 'Unauthorized: No token provided' });
     }
@@ -129,6 +138,7 @@ app.post('/login', async (req, res) => {
 
         res.send({
             message: "Login successful",
+            token,
             user: {
                 id: user._id,
                 name: user.name,
@@ -204,6 +214,7 @@ app.post('/auth/google', async (req, res) => {
 
         res.send({
             message: "Login successful",
+            token,
             user: {
                 id: user._id,
                 name: user.name,
