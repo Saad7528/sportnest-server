@@ -142,6 +142,85 @@ app.post('/login', async (req, res) => {
     }
 });
 
+app.post('/auth/google', async (req, res) => {
+    try {
+        const { access_token } = req.body;
+        if (!access_token) {
+            return res.status(400).send({ message: "Google access token is required" });
+        }
+
+        // Fetch user info from Google's UserInfo API using the access token
+        const googleResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: {
+                Authorization: `Bearer ${access_token}`
+            }
+        });
+
+        if (!googleResponse.ok) {
+            return res.status(400).send({ message: "Invalid Google access token" });
+        }
+
+        const googleUser = await googleResponse.json();
+        const { email, name, picture } = googleUser;
+
+        if (!email) {
+            return res.status(400).send({ message: "Google account does not have an email address" });
+        }
+
+        // Check if user exists in database
+        let user = await usersCollection.findOne({ email });
+
+        if (!user) {
+            // Register user if they do not exist
+            const salt = await bcrypt.genSalt(10);
+            const randomPassword = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+            const newUser = {
+                name,
+                email,
+                photoUrl: picture || '',
+                password: hashedPassword,
+                createdAt: new Date(),
+                provider: 'google'
+            };
+
+            const result = await usersCollection.insertOne(newUser);
+            user = {
+                _id: result.insertedId,
+                ...newUser
+            };
+        }
+
+        // Sign JWT local token
+        const token = jwt.sign(
+            { id: user._id, email: user.email, name: user.name, photoUrl: user.photoUrl },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        res.send({
+            message: "Login successful",
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                photoUrl: user.photoUrl
+            }
+        });
+    } catch (error) {
+        console.error("Error in Google Authentication:", error);
+        res.status(500).send({ message: "Internal server error" });
+    }
+});
+
 app.post('/logout', (req, res) => {
     res.clearCookie('token', {
         httpOnly: true,
