@@ -11,7 +11,7 @@ const port = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', process.env.CLIENT_URL].filter(Boolean),
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000','https://sportnest-client-one.vercel.app', process.env.CLIENT_URL].filter(Boolean),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
