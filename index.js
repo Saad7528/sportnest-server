@@ -487,7 +487,7 @@ if (process.env.NODE_ENV !== 'production') {
         .catch((err) => {
             console.error("Failed to connect to MongoDB at startup:", err);
             app.listen(port, () => {
-                console.log(`Server is running on port ${port} (DB disconnected)`);
+                console.log(`Server is running on port ${port}`);
             });
         });
 }
